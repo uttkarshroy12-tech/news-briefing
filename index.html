@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>News Briefing</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.5px; }
+    header span { font-size: 0.85rem; opacity: 0.6; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+
+    .intro {
+      background: white;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      border-left: 4px solid #4f46e5;
+    }
+    .intro h2 { font-size: 1.1rem; margin-bottom: 6px; color: #1a1a2e; }
+    .intro p { font-size: 0.9rem; color: #555; line-height: 1.6; }
+
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .source-group {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .source-group h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .source-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f8f8f8;
+    }
+    .source-item:last-child { border-bottom: none; }
+
+    .source-item input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: #4f46e5;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .source-item label {
+      font-size: 0.88rem;
+      cursor: pointer;
+      color: #333;
+      flex: 1;
+    }
+
+    .source-item .tag {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: #f0f0f5;
+      color: #666;
+    }
+
+    .controls {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .select-all-btn {
+      background: none;
+      border: 1.5px solid #4f46e5;
+      color: #4f46e5;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .select-all-btn:hover { background: #4f46e5; color: white; }
+
+    .briefing-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 700;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .briefing-btn:hover { background: #3730a3; }
+    .briefing-btn:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .selected-count {
+      font-size: 0.85rem;
+      color: #888;
+      margin-left: auto;
+    }
+
+    .output {
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      display: none;
+    }
+
+    .output.visible { display: block; }
+
+    .output h2 {
+      font-size: 1.1rem;
+      color: #1a1a2e;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .briefing-content {
+      font-size: 0.92rem;
+      line-height: 1.8;
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #4f46e5;
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid #e0e0ff;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      color: #dc2626;
+      background: #fef2f2;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      border-left: 3px solid #dc2626;
+    }
+
+    .timestamp {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 20px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<script src="/api/config"></script>
+
+<header>
+  <h1>📰 Firm News Briefing</h1>
+  <span>Powered by Google Gemini</span>
+</header>
+
+<div class="container">
+
+  <div class="intro">
+    <h2>Daily Intelligence Briefing</h2>
+    <p>Select your sources below, then click <strong>Get Today's Briefing</strong>. Gemini will fetch the latest headlines and generate a structured summary for your team.</p>
+  </div>
+
+  <div class="sources-grid" id="sourcesGrid"></div>
+
+  <div class="controls">
+    <button class="select-all-btn" onclick="selectAll()">Select All</button>
+    <button class="select-all-btn" onclick="clearAll()" style="border-color:#dc2626;color:#dc2626;" onmouseover="this.style.background='#dc2626';this.style.color='white'" onmouseout="this.style.background='none';this.style.color='#dc2626'">Clear All</button>
+    <button class="briefing-btn" id="briefingBtn" onclick="getBriefing()">
+      <span>⚡</span> Get Today's Briefing
+    </button>
+    <span class="selected-count" id="selectedCount">0 sources selected</span>
+  </div>
+
+  <div class="output" id="output">
+    <h2>📋 Today's Briefing</h2>
+    <div id="briefingContent"></div>
+    <div class="timestamp" id="timestamp"></div>
+  </div>
+
+</div>
+
+<script>
+const SOURCES = [
+  {
+    group: "🇮🇳 India — Tier 1",
+    sources: [
+      { id: "businessline", name: "The Hindu BusinessLine", tag: "Macro & Policy", rss: "https://api.allorigins.win/raw?url=https://www.thehindubusinessline.com/feeder/default.rss" },
+      { id: "et", name: "Economic Times", tag: "All-round Business", rss: "https://api.allorigins.win/raw?url=https://economictimes.indiatimes.com/rssfeedstopstories.cms" },
+      { id: "mint", name: "Mint", tag: "Economy & Startups", rss: "https://api.allorigins.win/raw?url=https://www.livemint.com/rss/homepage" },
+      { id: "bs", name: "Business Standard", tag: "Markets & Policy", rss: "https://api.allorigins.win/raw?url=https://www.business-standard.com/rss/home_page_top_stories.rss" },
+      { id: "fe", name: "Financial Express", tag: "Banking & Economy", rss: "https://api.allorigins.win/raw?url=https://www.financialexpress.com/feed/" },
+      { id: "mc", name: "MoneyControl", tag: "Markets & MF", rss: "https://api.allorigins.win/raw?url=https://www.moneycontrol.com/rss/MCtopnews.xml" },
+      { id: "ndtvprofit", name: "NDTV Profit", tag: "Business News", rss: "https://api.allorigins.win/raw?url=https://feeds.feedburner.com/ndtvprofit-latest" },
+    ]
+  },
+  {
+    group: "🇮🇳 India — Tier 2",
+    sources: [
+      { id: "inc42", name: "Inc42", tag: "Startups & VC", rss: "https://api.allorigins.win/raw?url=https://inc42.com/feed/" },
+      { id: "entrackr", name: "Entrackr", tag: "Startup Financials", rss: "https://api.allorigins.win/raw?url=https://entrackr.com/feed/" },
+      { id: "outlookbiz", name: "Outlook Business", tag: "Corporate India", rss: "https://api.allorigins.win/raw?url=https://www.outlookbusiness.com/rss" },
+    ]
+  },
+  {
+    group: "🏛️ India — Government & Official",
+    sources: [
+      { id: "rbi", name: "RBI Press Releases", tag: "Monetary Policy", rss: "https://api.allorigins.win/raw?url=https://www.rbi.org.in/Scripts/rss.aspx" },
+      { id: "pib", name: "PIB (Press Info Bureau)", tag: "Govt Policy", rss: "https://api.allorigins.win/raw?url=https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3" },
+      { id: "sebi", name: "SEBI Announcements", tag: "Capital Markets", rss: "https://api.allorigins.win/raw?url=https://www.sebi.gov.in/sebirss.xml" },
+    ]
+  },
+  {
+    group: "🌍 Global — Tier 1",
+    sources: [
+      { id: "reuters", name: "Reuters Business", tag: "Breaking News", rss: "https://api.allorigins.win/raw?url=https://feeds.reuters.com/reuters/businessNews" },
+      { id: "ap", name: "AP News Business", tag: "Global Economy", rss: "https://api.allorigins.win/raw?url=https://feeds.apnews.com/apnews/business" },
+      { id: "bbc", name: "BBC Business", tag: "Global", rss: "https://api.allorigins.win/raw?url=https://feeds.bbci.co.uk/news/business/rss.xml" },
+    ]
+  },
+  {
+    group: "🌍 Global — Tier 2",
+    sources: [
+      { id: "cnbc", name: "CNBC Business", tag: "Markets & Fed", rss: "https://api.allorigins.win/raw?url=https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147" },
+      { id: "guardian", name: "The Guardian Business", tag: "Global Economy", rss: "https://api.allorigins.win/raw?url=https://www.theguardian.com/business/rss" },
+      { id: "axios", name: "Axios Business", tag: "Smart Brevity", rss: "https://api.allorigins.win/raw?url=https://api.axios.com/feed/" },
+      { id: "fortune", name: "Fortune", tag: "Business Strategy", rss: "https://api.allorigins.win/raw?url=https://fortune.com/feed/" },
+    ]
+  },
+  {
+    group: "📊 Global — Macro & Deep Analysis",
+    sources: [
+      { id: "imf", name: "IMF Blog", tag: "Global Macro", rss: "https://api.allorigins.win/raw?url=https://www.imf.org/en/Blogs/rss" },
+      { id: "worldbank", name: "World Bank Blogs", tag: "Emerging Markets", rss: "https://api.allorigins.win/raw?url=https://blogs.worldbank.org/rss.xml" },
+      { id: "fed", name: "Federal Reserve", tag: "US Monetary Policy", rss: "https://api.allorigins.win/raw?url=https://www.federalreserve.gov/feeds/press_all.xml" },
+      { id: "ecb", name: "ECB", tag: "Europe Macro", rss: "https://api.allorigins.win/raw?url=https://www.ecb.europa.eu/rss/press.html" },
+    ]
+  }
+];
+
+// Render sources
+const grid = document.getElementById('sourcesGrid');
+SOURCES.forEach(group => {
+  const div = document.createElement('div');
+  div.className = 'source-group';
+  div.innerHTML = `<h3>${group.group}</h3>` + group.sources.map(s => `
+    <div class="source-item">
+      <input type="checkbox" id="${s.id}" data-rss="${s.rss}" data-name="${s.name}" onchange="updateCount()"/>
+      <label for="${s.id}">${s.name}</label>
+      <span class="tag">${s.tag}</span>
+    </div>
+  `).join('');
+  grid.appendChild(div);
+});
+
+function updateCount() {
+  const count = document.querySelectorAll('input[type=checkbox]:checked').length;
+  document.getElementById('selectedCount').textContent = `${count} source${count !== 1 ? 's' : ''} selected`;
+}
+
+function selectAll() {
+  document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
+  updateCount();
+}
+
+function clearAll() {
+  document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+  updateCount();
+}
+
+async function fetchRSS(url, name) {
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'text/xml');
+    const items = xml.querySelectorAll('item');
+    const headlines = [];
+    items.forEach((item, i) => {
+      if (i >= 8) return;
+      const title = item.querySelector('title')?.textContent?.trim();
+      const desc = item.querySelector('description')?.textContent?.replace(/<[^>]+>/g, '').trim().substring(0, 150);
+      if (title) headlines.push(`- ${title}${desc ? ': ' + desc : ''}`);
+    });
+    return headlines.length ? `\n### ${name}\n${headlines.join('\n')}` : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getBriefing() {
+  const checked = document.querySelectorAll('input[type=checkbox]:checked');
+  if (checked.length === 0) {
+    alert('Please select at least one source.');
+    return;
+  }
+
+  const btn = document.getElementById('briefingBtn');
+  const output = document.getElementById('output');
+  const content = document.getElementById('briefingContent');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Fetching...';
+  output.classList.add('visible');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> Fetching headlines from selected sources...</div>';
+
+  // Fetch all RSS feeds
+  const fetchPromises = Array.from(checked).map(cb =>
+    fetchRSS(cb.dataset.rss, cb.dataset.name)
+  );
+  const results = await Promise.all(fetchPromises);
+  const headlines = results.filter(Boolean).join('\n');
+
+  if (!headlines) {
+    content.innerHTML = '<div class="error-msg">Could not fetch headlines from any source. Please try again.</div>';
+    btn.disabled = false;
+    btn.innerHTML = '<span>⚡</span> Get Today\'s Briefing';
+    return;
+  }
+
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> Gemini is generating your briefing...</div>';
+
+  try {
+    const apiKey = window.GEMINI_API_KEY;
+    const prompt = `You are a senior business analyst at a top consulting firm. Based on the following headlines and snippets from credible news sources, generate a structured daily briefing for the firm's professionals.
+
+Format the briefing as:
+1. **Executive Summary** (3-4 sentences covering the most important macro themes today)
+2. **India Business & Economy** (key India-specific developments, bullet points)
+3. **Global Markets & Macro** (key global developments, bullet points)
+4. **Sectoral Highlights** (notable sector-specific news: banking, startups, energy, trade, etc.)
+5. **Policy & Regulatory Watch** (any government, central bank, or regulatory news)
+6. **One Thing to Watch** (single most important story to monitor going forward)
+
+Be concise, professional, and analytical. Use consulting-style language.
+
+---
+HEADLINES:
+${headlines}`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 2048 }
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('No response from Gemini.');
+
+    // Render markdown-style bold
+    const formatted = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^### (.*)/gm, '<h4 style="margin:16px 0 6px;color:#1a1a2e">$1</h4>')
+      .replace(/^## (.*)/gm, '<h3 style="margin:20px 0 8px;color:#4f46e5">$1</h3>')
+      .replace(/^# (.*)/gm, '<h2 style="margin:20px 0 8px;color:#1a1a2e">$1</h2>')
+      .replace(/\n/g, '<br/>');
+
+    content.innerHTML = `<div class="briefing-content">${formatted}</div>`;
+    document.getElementById('timestamp').textContent = `Generated on ${new Date().toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' })}`;
+
+  } catch (err) {
+    content.innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>⚡</span> Get Today\'s Briefing';
+}
+
+updateCount();
+</script>
+</body>
+</html>
